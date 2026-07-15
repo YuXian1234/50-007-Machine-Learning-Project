@@ -1,6 +1,6 @@
 import numpy as np
 
-def logreg_full_batch(X: np.ndarray, Y: np.ndarray, epoch: int, learning_rate=0.1) -> tuple[float | np.floating, np.ndarray, float | np.floating]:
+def logreg_full_batch(X: np.ndarray, Y: np.ndarray, epoch: int, learning_rate=0.1, lambda_reg=0.01) -> tuple[float | np.floating, np.ndarray, float | np.floating]:
     """
     Logistic Regression function using Full-batch Gradient Descent
     """
@@ -16,13 +16,13 @@ def logreg_full_batch(X: np.ndarray, Y: np.ndarray, epoch: int, learning_rate=0.
     while (epoch > 0):
         hofX = sigmoid(theta, X, bias)      # predictions
         error = hofX - Y
-        gradient = X.T @ error / m
+        gradient = X.T @ error / m + (lambda_reg / m) * theta   # L2 regularization
         gradient_bias = np.mean(error)
 
         theta = theta - learning_rate * gradient
         bias = bias - learning_rate * gradient_bias
         
-        current_cost = -np.mean(Y * np.log(hofX + eps) + (1 - Y) * np.log(1 - hofX + eps))
+        current_cost = -np.mean(Y * np.log(hofX + eps) + (1 - Y) * np.log(1 - hofX + eps)) + (lambda_reg / (2 * m)) * np.sum(theta ** 2)  # Penalty
         
         if current_cost < best_cost:
             best_cost = current_cost
@@ -34,7 +34,7 @@ def logreg_full_batch(X: np.ndarray, Y: np.ndarray, epoch: int, learning_rate=0.
     return best_cost, best_theta, best_bias
 
 
-def logreg_mini_batch(X: np.ndarray, Y: np.ndarray, epoch=5, batch_size=512, learning_rate=0.1, seed=42) -> tuple[float | np.floating, np.ndarray, float | np.floating]:
+def logreg_mini_batch(X: np.ndarray, Y: np.ndarray, epoch=5, batch_size=512, learning_rate=0.1, seed=42, lambda_reg=0.01) -> tuple[float | np.floating, np.ndarray, float | np.floating]:
     """
     Logistic Regression function using mini-batch Gradient Descent
     """
@@ -61,14 +61,14 @@ def logreg_mini_batch(X: np.ndarray, Y: np.ndarray, epoch=5, batch_size=512, lea
 
             hofX = sigmoid(theta, X_batch, bias)      # predictions
             error = hofX - Y_batch
-            gradient = (X_batch.T @ error) / batch_m
+            gradient = (X_batch.T @ error) / batch_m + (lambda_reg / batch_m) * theta
             gradient_bias = np.mean(error)
 
             theta = theta - learning_rate * gradient
             bias = bias - learning_rate * gradient_bias
         
         all_preds = sigmoid(theta, X, bias)
-        current_cost = -np.mean(Y * np.log(all_preds + eps) + (1 - Y) * np.log(1 - all_preds + eps))
+        current_cost = -np.mean(Y * np.log(all_preds + eps) + (1 - Y) * np.log(1 - all_preds + eps)) + (lambda_reg / (2 * m)) * np.sum(theta ** 2)  # Add penalty
         
         if current_cost < best_cost:
             best_cost = current_cost
